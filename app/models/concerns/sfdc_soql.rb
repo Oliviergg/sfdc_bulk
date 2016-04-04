@@ -18,18 +18,7 @@ module SfdcSoql
         }
 
         sfdc_attrs = attrs.map do |attr|
-          attr_info = target_class.columns_hash[attr]
-
-          to_attr = if attr_info.type == :boolean
-            {
-              attr: attr,
-              transf: "SELECT IF(STRCMP(@#{attr},'true'),1,0)"
-            }
-          else
-            attr
-          end
-
-          [attr,to_attr]
+          [attr,attr]
         end.to_h
 
         sfdc_default_attrs.merge(sfdc_attrs)

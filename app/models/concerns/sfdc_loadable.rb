@@ -34,6 +34,9 @@ module SfdcLoadable
 
 
       def load_data_sql(filename)
+        unless const_defined?("SfdcBulk::#{self.name}")
+          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcApi))
+        end
         build_sql(filename,self.table_name, "SfdcBulk::#{self.new.class.name}".constantize.new.mapping)
       end
 
@@ -50,8 +53,29 @@ module SfdcLoadable
       end
 
       private
+
+      def transform_mapping(mapping)
+        mapping.map do |attr,to_attr|
+          to_attr_info = columns_hash[to_attr]
+          case to_attr_info.type
+          when :boolean
+            {
+              attr: to_attr,
+              transf: "SELECT IF(STRCMP(@#{to_attr},'true'),1,0)"
+            }
+          when :datetime
+            {
+              attr: to_attr,
+              transf: "STR_TO_DATE(@#{to_attr},'%Y-%m-%dT%H:%i:%s')"
+            }
+          else
+            to_attr
+          end
+        end
+      end
+
       def prepare_field_list(mapping)
-        mapping.map do |k,v| 
+        mapping.map do |v| 
           if v.is_a?(String) 
             v 
           elsif v.nil?
@@ -62,9 +86,11 @@ module SfdcLoadable
         end.compact.join(", ")
       end
 
+
       def prepare_set_list(mapping)
-        set_list = mapping.select{ |k,v| v.is_a?(Hash) }
-                          .map{ |k,v| "#{v[:attr]} = (#{v[:transf]})" }
+
+        set_list = mapping.select{ |v| v.is_a?(Hash) }
+                          .map{ |v| "#{v[:attr]} = (#{v[:transf]})" }
         if set_list.empty?
           ""
         else
@@ -73,18 +99,19 @@ module SfdcLoadable
       end
 
 
-      def build_sql(filename,table_name,mapping)
+      def build_sql(filename, table_name, mapping)
+        transformed_mapping =  transform_mapping(mapping)
 
-  <<-SQL
-  LOAD DATA LOCAL INFILE '#{filename}' 
-  INTO TABLE #{table_name}
-   FIELDS TERMINATED BY ',' 
-   ENCLOSED BY '"'
-    LINES TERMINATED BY '\n'
-  IGNORE 1 LINES
-    (#{prepare_field_list(mapping)})
-    #{prepare_set_list(mapping)}
-  SQL
+<<-SQL
+LOAD DATA LOCAL INFILE '#{filename}' 
+INTO TABLE #{table_name}
+ FIELDS TERMINATED BY ',' 
+ ENCLOSED BY '"'
+  LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+  (#{prepare_field_list(transformed_mapping)})
+  #{prepare_set_list(transformed_mapping)}
+SQL
 
       end
 
