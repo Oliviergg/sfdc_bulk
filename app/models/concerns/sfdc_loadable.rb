@@ -35,14 +35,14 @@ module SfdcLoadable
 
       def load_data_sql(filename)
         unless const_defined?("SfdcBulk::#{self.name}")
-          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcApi))
+          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcQueryApi))
         end
         build_sql(filename,self.table_name, "SfdcBulk::#{self.new.class.name}".constantize.new.mapping)
       end
 
       def reload_from_sfdc
         unless const_defined?("SfdcBulk::#{self.name}")
-          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcApi))
+          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcQueryApi))
         end
         load_in_db "SfdcBulk::#{self.new.class.name}".constantize.new.run
       end

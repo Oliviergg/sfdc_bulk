@@ -1,10 +1,6 @@
-module SfdcSoql
+module SfdcQuerySoql
     extend ActiveSupport::Concern
 
-
-      def target_class
-        self.class.name.split("::").last.constantize
-      end
 
       def mapping
 
