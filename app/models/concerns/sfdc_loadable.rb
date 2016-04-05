@@ -88,13 +88,12 @@ module SfdcLoadable
 
 
       def prepare_set_list(mapping)
-
         set_list = mapping.select{ |v| v.is_a?(Hash) }
                           .map{ |v| "#{v[:attr]} = (#{v[:transf]})" }
-        if set_list.empty?
-          ""
-        else
-          "SET \n#{set_list.join("\n")}\n;"
+                          .join(",\n")
+
+        unless set_list.empty?
+          "SET \n#{set_list}\n;"
         end
       end
 
