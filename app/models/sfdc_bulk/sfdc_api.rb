@@ -33,6 +33,15 @@ module SfdcBulk
       XML
     end
 
+    def close_job_xml
+      return <<-XML
+<?xml version="1.0" encoding="UTF-8"?>
+<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+  <state>Closed</state>
+</jobInfo>
+XML
+    end
+
 
     def run
       start_new_job
@@ -45,7 +54,10 @@ module SfdcBulk
       end
 
       get_result_ids
-      result_to_file
+      filename = result_to_file
+      
+      close_job
+      filename
     end
 
     def job
@@ -63,6 +75,11 @@ module SfdcBulk
         result["jobInfo"]["id"]
       end
     end
+
+    def close_job
+      call_api("#{job}/#{@job_id}",close_job_xml,{"Content-Type"=> "application/xml"})
+    end
+
 
     def start_new_batch
       @batch_id = call_api(batch,query, {"Content-Type"=> "text/csv"}) do |result|
