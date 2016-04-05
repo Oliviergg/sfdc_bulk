@@ -17,7 +17,7 @@ module SfdcBulk
     end
 
     def sobject
-      self.class.name.split("::").last.constantize.sobject
+      target_class.sobject
     end
 
     def create_job_xml
@@ -78,7 +78,7 @@ module SfdcBulk
 
     def result_to_file
       @result_ids = [@result_ids].flatten
-      filename= "tmp/bulk_result_#{sobject.underscore}_#{@job_id}_#{@batch_id}.csv"
+      filename= "tmp/bulk_result_#{target_class.name.underscore}_#{@job_id}_#{@batch_id}.csv"
 
       File.open(filename,"w") do |f|
         @result_ids.each_with_index do |result_id,index|

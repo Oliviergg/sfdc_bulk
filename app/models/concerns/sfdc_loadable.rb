@@ -4,32 +4,32 @@ module SfdcLoadable
 
     # methods defined here are going to extend the class, not the instance of it
     module ClassMethods
-      @@sobject = nil
-      @@swhere = nil
-      @@slimit = nil
+      @sobject = nil
+      @swhere = nil
+      @slimit = nil
 
       def set_sfdc_object(name)
-        @@sobject = name
+        @sobject = name
       end
 
       def set_sfdc_where(where)
-        @@swhere = where
+        @swhere = where
       end
 
 
       def set_sfdc_limit(limit)
-        @@slimit = limit
+        @slimit = limit
       end
 
       def sobject
-        @@sobject || self.name
+        @sobject || self.name
       end
 
       def sfdc_where
-        @@swhere 
+        @swhere 
       end
       def sfdc_limit
-        @@slimit
+        @slimit
       end
 
 
