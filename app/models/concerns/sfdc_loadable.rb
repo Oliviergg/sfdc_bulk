@@ -22,7 +22,7 @@ module SfdcLoadable
       end
 
       def sobject
-        @sobject || self.name
+        @sobject || self.name.split("::").last
       end
 
       def sfdc_where
@@ -32,24 +32,27 @@ module SfdcLoadable
         @slimit
       end
 
+      def sfdc_api_instance(target_class:)
+        return @instance unless @instance.nil?
+        klass = Class.new(SfdcBulk::SfdcQueryApi)
+        @instance ||= klass.new(target_class: target_class)
+      end
+
 
       def load_data_sql(filename)
-        unless const_defined?("SfdcBulk::#{self.name}")
-          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcQueryApi))
-        end
-        build_sql(filename,self.table_name, "SfdcBulk::#{self.new.class.name}".constantize.new.mapping)
+        build_sql(filename, sfdc_api_instance(target_class: self).mapping )
       end
 
       def reload_from_sfdc
-        unless const_defined?("SfdcBulk::#{self.name}")
-          SfdcBulk.const_set(self.name, Class.new(SfdcBulk::SfdcQueryApi))
-        end
-        load_in_db "SfdcBulk::#{self.new.class.name}".constantize.new.run
+        load_in_db(sfdc_api_instance(target_class: self).run)
       end
 
       def load_in_db(filename)
-        self.connection.execute("truncate table #{self.table_name}")
-        self.connection.execute(load_data_sql(filename))
+        statements = [load_data_sql(filename)].flatten
+        statements.each do |statement|
+          self.connection.execute(statement)
+        end
+        true
       end
 
       private
@@ -97,21 +100,30 @@ module SfdcLoadable
         end
       end
 
-
-      def build_sql(filename, table_name, mapping)
-        transformed_mapping =  transform_mapping(mapping)
-
+      def truncate_sql_statement(params)
 <<-SQL
-LOAD DATA LOCAL INFILE '#{filename}' 
-INTO TABLE #{table_name}
+TRUNCATE TABLE #{params[:table_name]};
+SQL
+      end
+      def load_data_sql_statement(params)
+<<-SQL
+LOAD DATA LOCAL INFILE '#{params[:filename]}' 
+INTO TABLE #{params[:table_name]}
  FIELDS TERMINATED BY ',' 
  ENCLOSED BY '"'
   LINES TERMINATED BY '\n'
 IGNORE 1 LINES
-  (#{prepare_field_list(transformed_mapping)})
-  #{prepare_set_list(transformed_mapping)}
+  (#{prepare_field_list(params[:mapping])})
+  #{prepare_set_list(params[:mapping])}
 SQL
+      end
 
+      def build_sql(filename, mapping)
+        statements = []
+        statements << truncate_sql_statement(table_name: self.table_name)
+        statements << load_data_sql_statement(table_name: self.table_name,filename: filename, mapping: transform_mapping(mapping))
+
+        statements
       end
 
 

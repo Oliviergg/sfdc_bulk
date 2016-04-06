@@ -1,7 +1,7 @@
 module SfdcBulk
 
 	class Connection
-		# include SFDC::Proxy			
+			attr_reader :response, :api_version, :instance
 			def initialize
 				print "-----------------------------------------------------\n"
 				print "login on #{$sfdcbulk_configuration.sfdc_login_endpoint}\n"
@@ -16,8 +16,8 @@ module SfdcBulk
 					login:{
 						endpoint: $sfdcbulk_configuration.sfdc_login_endpoint,
 				 		namespace:"urn:enterprise.soap.sforce.com",
-				 		pretty_print_xml:true,
-				 		log: true
+				 		# pretty_print_xml:true,
+				 		# log: true
 					}
 				}
 			end
@@ -30,7 +30,16 @@ module SfdcBulk
 					password: self.config[:password],
 				})
 
-				@session_id = login_response.body[:login_response][:result][:session_id]
+				@response = login_response.body[:login_response][:result]
+				@session_id = @response[:session_id]
+
+				res = response[:server_url].match(/https:\/\/(.*)\.salesforce\.com\/services\/Soap\/c\/([0-9\.]+)/)
+				@instance = res[1] 
+				@api_version = res[2]
+				$sfdcbulk_configuration.sfdc_instance = @instance
+				$sfdcbulk_configuration.sfdc_api_version = @api_version
+
+				@session_id
 			end
 
 	end

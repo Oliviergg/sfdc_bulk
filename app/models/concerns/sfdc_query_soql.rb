@@ -39,6 +39,10 @@ module SfdcQuerySoql
         soql
       end
 
+      def sfdc_data
+        query
+      end
+
 
     # methods defined here are going to extend the class, not the instance of it
     module ClassMethods

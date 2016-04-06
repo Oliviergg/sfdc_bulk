@@ -3,14 +3,6 @@ module SfdcBulk
 
     attr_accessor :job_id, :batch_id, :result_id
 
-    def api_version
-      "35.0"
-    end
-
-    def instance
-      "cs87"
-    end
-
     def session_id
       @connection ||= Connection.new
       @connection.session_id
@@ -45,17 +37,33 @@ XML
       call_api("#{job}/#{@job_id}",close_job_xml,{"Content-Type"=> "application/xml"})
     end
 
+    def start_new_batch
+      @batch_id = call_api(batch, sfdc_data , {"Content-Type"=> "text/csv"}) do |result|
+        result["batchInfo"]["id"]
+      end
+    end
+
     def is_completed_batch
       state = call_api("job/#{@job_id}/batch/#{@batch_id}") {|result| result["batchInfo"]["state"]}
       raise "Failed" if state == "Failed"
       "Completed" == state
     end
 
+    def base_sfdc_url
+      instance = $sfdcbulk_configuration.sfdc_instance
+      api_version = $sfdcbulk_configuration.sfdc_api_version
+
+      "https://#{instance}.salesforce.com/services/async/#{api_version}"
+
+    end
+
 
     def call_api(service,params=nil,options={},&block)
-      RestClient.log = 'stdout'
-      bulk_api_url = "https://#{instance}.salesforce.com/services/async/#{api_version}/#{service}"
+      session_id
+      bulk_api_url = "#{base_sfdc_url}/#{service}"
+
       Rails.logger.info("call api #{sobject}: #{bulk_api_url}")
+
       headers = { 
         "X-SFDC-Session" => session_id , 
         "charset" => "UTF-8", 

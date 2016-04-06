@@ -4,11 +4,15 @@ module SfdcBulk
     attr_accessor :job_id, :batch_id, :result_id
 
     def target_class
-      self.class.name.split("::").last.constantize
+      @target_class 
     end
 
     def sobject
       target_class.sobject
+    end
+
+    def initialize(target_class:)
+      @target_class = target_class
     end
 
 
@@ -42,12 +46,6 @@ module SfdcBulk
       filename
     end
 
-    def start_new_batch
-      @batch_id = call_api(batch,query, {"Content-Type"=> "text/csv"}) do |result|
-        result["batchInfo"]["id"]
-      end
-    end
-
     def get_result_ids
       @result_ids = call_api(result_ids) do |result|
         result["result_list"]["result"]
@@ -56,7 +54,7 @@ module SfdcBulk
 
     def result_to_file
       @result_ids = [@result_ids].flatten
-      filename= "tmp/bulk_result_#{target_class.name.underscore}_#{@job_id}_#{@batch_id}.csv"
+      filename= "tmp/bulk_result_#{target_class.name.underscore.gsub("/","_")}_#{@job_id}_#{@batch_id}.csv"
 
       File.open(filename,"w") do |f|
         @result_ids.each_with_index do |result_id,index|
