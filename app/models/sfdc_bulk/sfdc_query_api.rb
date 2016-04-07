@@ -1,6 +1,6 @@
 module SfdcBulk
   class SfdcQueryApi < SfdcApi
-    include SfdcBulk::SfdcQuerySoql
+    include SfdcQuerySoql
     attr_accessor :job_id, :batch_id, :result_id
 
     def target_class
