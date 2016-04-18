@@ -10,7 +10,7 @@ module SfdcQuerySoql
         attrs.delete("created_at")
         attrs.delete("updated_at")
         sfdc_default_attrs = {
-          "Id" => "sfdc_id"
+          "id" => "sfdc_id"
         }
 
         sfdc_attrs = attrs.map do |attr|
