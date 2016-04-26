@@ -3,15 +3,18 @@ module SfdcQuerySoql
 
 
       def mapping
+        excluded_attributes_default = [:id, :created_at, :updated_at]
 
         attrs = target_class.attribute_names.dup
-        attrs.delete("id")
-        attrs.delete("sfdc_id")
-        attrs.delete("created_at")
-        attrs.delete("updated_at")
+        
+        excluded_attributes_default.each do |attr| attrs.delete(attr.to_s) end
+        target_class.excluded_attributes.each do |attr| attrs.delete(attr.to_s) end
+        
+
         sfdc_default_attrs = {
           "id" => "sfdc_id"
         }
+        attrs.delete("sfdc_id")
 
         sfdc_attrs = attrs.map do |attr|
           [attr,attr]

@@ -59,6 +59,8 @@ XML
 
 
     def call_api(service,params=nil,options={},&block)
+      RestClient.log = 'stdout'
+
       session_id
       bulk_api_url = "#{base_sfdc_url}/#{service}"
 
