@@ -7,7 +7,7 @@ module SfdcQuerySoql
         attrs = target_class.attribute_names.dup
         
         excluded_attributes_default.each do |attr| attrs.delete(attr.to_s) end
-        querier_class.excluded_attributes.each do |attr| attrs.delete(attr.to_s) end
+        excluded_attributes.each do |attr| attrs.delete(attr.to_s) end
         
 
         sfdc_default_attrs = {

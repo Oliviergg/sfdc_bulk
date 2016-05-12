@@ -2,6 +2,16 @@ module SfdcLoadable
     require "csv"
     extend ActiveSupport::Concern
 
+    def excluded_attributes=(exc)
+      @excluded_attributes = [exc].flatten
+    end
+    
+    def excluded_attributes
+      @excluded_attributes || []
+    end
+
+
+
     def initialize_target_row(target_row,sfdc_row)
       mapping = self.mapping
       ch = target_class.columns_hash
@@ -64,14 +74,6 @@ SQL
 
       def set_sfdc_where(where)
         @swhere = where
-      end
-
-      def set_excluded_attributes(attributes)
-        @excluded_attributes = [attributes].flatten
-      end
-      
-      def excluded_attributes
-        @excluded_attributes || []
       end
 
       def set_sfdc_limit(limit)
