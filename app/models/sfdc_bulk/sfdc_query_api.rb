@@ -1,20 +1,23 @@
 module SfdcBulk
   class SfdcQueryApi < SfdcApi
+    include SfdcLoadable
     include SfdcQuerySoql
-    attr_accessor :job_id, :batch_id, :result_id
 
+    def self.base_class
+      self.name.split("::")[0..1].join("::").constantize
+    end
+
+    def querier_class
+      self.class
+    end
+    
     def target_class
-      @target_class 
+      self.class.base_class
     end
 
     def sobject
-      target_class.sobject
+      self.class.sobject
     end
-
-    def initialize(target_class:)
-      @target_class = target_class
-    end
-
 
     def create_job_xml
       return <<-XML
@@ -22,7 +25,7 @@ module SfdcBulk
 <jobInfo
     xmlns="http://www.force.com/2009/06/asyncapi/dataload">
   <operation>query</operation>
-  <object>#{target_class.sobject}</object>
+  <object>#{self.sobject}</object>
   <concurrencyMode>Parallel</concurrencyMode>
   <contentType>CSV</contentType>
 </jobInfo>

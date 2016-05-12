@@ -1,7 +1,5 @@
 module SfdcBulk
   class SfdcUpsertApi < SfdcApi
-    attr_accessor :job_id, :batch_id, :result_id
-
 
     def sobject
       self.class.sobject
