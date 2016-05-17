@@ -1,5 +1,6 @@
 module SfdcBulk
-  class SfdcUpsertApi < SfdcApi
+  class SfdcUpsertApi 
+    include SfdcBulkApiBase
 
     # def sobject
     #   self.class.sobject
