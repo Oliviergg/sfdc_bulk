@@ -1,6 +1,63 @@
-module SfdcLoadable
+module SfdcBulkQueryConfig
     require "csv"
     extend ActiveSupport::Concern
+
+    # methods defined here are going to extend the class, not the instance of it
+    module ClassMethods
+      @sobject = nil
+      @swhere = nil
+      @slimit = nil
+
+
+      def base_class
+        a = self.name.split("::")
+        a.pop
+        a.join("::").constantize
+      end
+
+      def set_sfdc_object(name)
+        @sobject = name
+      end
+
+      def set_sfdc_where(where)
+        @swhere = where
+      end
+
+      def set_sfdc_limit(limit)
+        @slimit = limit
+      end
+
+      def set_sfdc_refresh_method(method)
+        @srefresh_method = method
+      end
+
+
+      def sobject
+        @sobject || self.name.split("::")[1]
+      end
+
+      def sfdc_where
+        @swhere 
+      end
+
+      def sfdc_limit
+        @slimit
+      end
+
+      def sfdc_refresh_method
+        @srefresh_method ||= :upsert
+      end
+
+    end
+
+    def querier_class
+      self.class
+    end
+    
+    def target_class
+      self.class.base_class
+    end
+
 
     def excluded_attributes=(exc)
       @excluded_attributes = [exc].flatten
@@ -62,45 +119,5 @@ SQL
 
 
 
-    # methods defined here are going to extend the class, not the instance of it
-    module ClassMethods
-      @sobject = nil
-      @swhere = nil
-      @slimit = nil
-
-      def set_sfdc_object(name)
-        @sobject = name
-      end
-
-      def set_sfdc_where(where)
-        @swhere = where
-      end
-
-      def set_sfdc_limit(limit)
-        @slimit = limit
-      end
-
-      def set_sfdc_refresh_method(method)
-        @srefresh_method = method
-      end
-
-
-      def sobject
-        @sobject || self.name.split("::")[1]
-      end
-
-      def sfdc_where
-        @swhere 
-      end
-
-      def sfdc_limit
-        @slimit
-      end
-
-      def sfdc_refresh_method
-        @srefresh_method ||= :upsert
-      end
-
-    end
 
 end
