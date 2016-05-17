@@ -15,63 +15,42 @@ module SfdcBulk
       self.class.base_class
     end
 
-    def sobject
-      self.class.sobject
-    end
-
     def create_job_xml
       return <<-XML
 <?xml version="1.0" encoding="UTF-8"?>
 <jobInfo
     xmlns="http://www.force.com/2009/06/asyncapi/dataload">
   <operation>query</operation>
-  <object>#{self.sobject}</object>
+  <object>#{self.class.sobject}</object>
   <concurrencyMode>Parallel</concurrencyMode>
   <contentType>CSV</contentType>
 </jobInfo>
       XML
     end
 
+
     def run
-      start_new_job
-      start_new_batch
+      self.current_job = SfdcBulk::Job.new(sfdc_api: self)
 
-      completed = false
-      sleep 10
-      while !is_completed_batch
-        sleep 30 
+      self.current_job.start do |job|
+        job.start_new_batch(query)
       end
 
-      get_result_ids
-      filename = result_to_file
-
-      close_job
-      filename
-    end
-
-    def get_result_ids
-      @result_ids = call_api(result_ids) do |result|
-        result["result_list"]["result"]
+      success = current_job.wait_for_completion
+      if !success
+        self.current_job.log_status
+        raise "A Batch Failed. more info : see job #{@current_job.joid}"
       end
-    end
 
-    def result_to_file
-      @result_ids = [@result_ids].flatten
-      filename= "tmp/bulk_result_#{target_class.name.underscore.gsub("/","_")}_#{@job_id}_#{@batch_id}.csv"
-
-      File.open(filename,"w") do |f|
-        @result_ids.each_with_index do |result_id,index|
-          result = call_api("job/#{@job_id}/batch/#{@batch_id}/result/#{result_id}")
-          if index > 0 
-            splitted = result.split("\n")
-            splitted.shift
-            result = splitted.join("\n")
-          end
-          f.write result
-        end
+      filenames = self.current_job.batches.map do |batch|
+        result = SfdcBulk::Result.new(job:current_job, batch:batch)
+        result.get_as_file
       end
-      filename
+
+      current_job.close
+      filenames.first
     end
+
 
   end
 end
