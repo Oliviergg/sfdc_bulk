@@ -94,7 +94,7 @@ module SfdcBulkQueryConfig
       if method.nil?
         method = self.class.sfdc_refresh_method
       end
-      if method == :truncate
+      if method.to_sym == :truncate
         target_class.connection.execute(truncate_sql_statement(table_name: target_class.table_name))
       end
       
