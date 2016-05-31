@@ -106,7 +106,11 @@ module SfdcBulkQueryConfig
           target_row = target_class.find_by(self.mapping["id"] => row["id"]) || target_class.new
         end
         initialize_target_row(target_row,row)
-        target_row.save
+        begin
+          target_row.save
+        rescue => e
+          Rails.logger.info("#{e.inspect} Cant import #{row} ")
+        end
       end
       true
     end
