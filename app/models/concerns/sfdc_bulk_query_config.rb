@@ -90,21 +90,43 @@ module SfdcBulkQueryConfig
       self.import(filename,method)
     end
 
+    def import_fast(filename)
+        target_class.querier_instance.truncate
+        columns = target_class.columns_hash
+        csv = open_csv(filename)
+        
+        target_columns = nil
+
+        csv.each_slice(1000) do |rows|
+          
+          target_values = rows.map do |row|
+            h = row.to_h
+            if target_columns.nil?
+              target_columns = h.keys.map do |column|
+                self.mapping[column]
+              end
+            end            
+            h.values.map { |v| v.blank? ? nil : v }
+          end
+          target_class.import target_columns, target_values, validate: false
+        end
+    end
+
+    def open_csv(filename)
+      CSV.open(filename,headers:true,header_converters:lambda { |h| h.downcase})
+    end
+
     def import(filename,method)
       if method.nil?
         method = self.class.sfdc_refresh_method
       end
+
       if method.to_sym == :truncate
-        target_class.connection.execute(truncate_sql_statement(table_name: target_class.table_name))
+        return import_fast(filename)
       end
       
-      csv = CSV.open(filename,headers:true,header_converters:lambda { |h| h.downcase})
-      csv.each do |row|
-        if method == :truncate
-          target_row = target_class.new
-        else
-          target_row = target_class.find_by(self.mapping["id"] => row["id"]) || target_class.new
-        end
+      open_csv(filename).each do |row|
+        target_row = target_class.find_by(self.mapping["id"] => row["id"]) || target_class.new
         initialize_target_row(target_row,row)
         begin
           target_row.save
@@ -121,6 +143,9 @@ TRUNCATE TABLE #{params[:table_name]};
 SQL
     end
 
+    def truncate
+      target_class.connection.execute(truncate_sql_statement(table_name: target_class.table_name))
+    end
 
 
 

@@ -20,8 +20,8 @@ module SfdcQueriable
 	  	querier_instance.reload_from_sfdc(method: method)
 	  end
 
-	  def import(filename:  ,method: nil)
-	  	querier_instance.import(filename,method)
-	  end
+	  # def import(filename:  ,method: nil)
+	  # 	querier_instance.import(filename,method)
+	  # end
 	end
 end
