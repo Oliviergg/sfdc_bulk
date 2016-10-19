@@ -49,7 +49,8 @@ module SfdcBulk
 
 
     def close
-      sfdc_api.call_api(self.url, close_job_xml, {"Content-Type"=> "application/xml"})
+      response = sfdc_api.call_api(self.url, close_job_xml, {"Content-Type"=> "application/xml"})
+      Hash.from_xml(response.body)
     end
 
     def to_s

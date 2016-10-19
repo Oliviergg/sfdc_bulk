@@ -99,16 +99,27 @@ module SfdcBulkQueryConfig
 
         csv.each_slice(1000) do |rows|
           
-          target_values = rows.map do |row|
+          target_rows = rows.map do |row|
             h = row.to_h
             if target_columns.nil?
               target_columns = h.keys.map do |column|
                 self.mapping[column]
               end
             end            
-            h.values.map { |v| v.blank? ? nil : v }
+            h.values.map do |v| 
+              v.blank? ? nil : v 
+            end.map do |v|
+              v.is_a?(String) ? v.encode(Encoding::ISO8859_1, {invalid: :replace, undef: :replace, replace: ''}) : v
+            end
           end
-          target_class.import target_columns, target_values, validate: false
+          target_class.import target_columns, target_rows, validate: false
+          # target_rows.each do |row|
+          #   begin 
+          #     target_class.import target_columns, [row], validate: false
+          #   rescue
+          #     print row
+          #   end
+          # end        
         end
     end
 
