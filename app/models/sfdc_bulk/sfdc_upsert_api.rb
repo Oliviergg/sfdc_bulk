@@ -53,10 +53,14 @@ module SfdcBulk
     def payload_to_xml(payload_part)
       return <<-XMLDATA
 <?xml version="1.0" encoding="UTF-8"?>
-<sObjects xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+<sObjects xmlns="http://www.force.com/2009/06/asyncapi/dataload" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 #{payload_part.map do |orig|
     "\t<sObject>\n" + map_one(orig).map do |k,v|
-        "\t\t<#{k.to_s}>#{v}</#{k.to_s}>"
+        if v.nil?
+          "\t\t<#{k.to_s} xsi:nil='true'/>"
+        else
+          "\t\t<#{k.to_s}>#{v}</#{k.to_s}>"
+        end
       end.join("\n") + "\n\t</sObject>"
     end.join("\n") 
     }   
