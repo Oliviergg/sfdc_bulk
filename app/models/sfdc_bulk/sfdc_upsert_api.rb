@@ -56,7 +56,7 @@ module SfdcBulk
 <sObjects xmlns="http://www.force.com/2009/06/asyncapi/dataload" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 #{payload_part.map do |orig|
     "\t<sObject>\n" + map_one(orig).map do |k,v|
-        if v.nil?
+        if v.blank?
           "\t\t<#{k.to_s} xsi:nil='true'/>"
         else
           "\t\t<#{k.to_s}>#{v}</#{k.to_s}>"
